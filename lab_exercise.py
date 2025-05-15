@@ -70,10 +70,10 @@ else:
 #########################
 ##### EDITAR #####
 # Hace una llamada para retornar el inventario de la organización. 
-    try:
-        inventory = dashboard.organizations.getOrganizationInventoryDevices()
-    except meraki.APIError as e:
-        sys.exit(f"❌ Parte 2: Error en el request: {e}")
+try:
+    inventory = dashboard.organizations.getOrganizationInventoryDevices()
+except Exception as e:
+    sys.exit(f"❌ Parte 2: Error en el request: {e}")
 
 ##### EDITAR #####
 #########################
@@ -138,7 +138,7 @@ else:
     # Hacer un update de los atributos del AP - Agregar parámetros necesarios
     try:
         dashboard.devices.updateDevice(moveMapMarker=True)
-    except meraki.APIError as e:
+    except Exception as e:
         sys.exit(f"❌ Parte 4: Error: {e}")
     # ###### EDITAR ######
     # #########################
@@ -147,20 +147,20 @@ else:
     # === Verificación de cambios aplicados ===
     try:
         device_detail = dashboard.devices.getDevice(my_serial)
-    except meraki.APIError as e:
+    except Exception as e:
         sys.exit(f"Parte 4: No se pudo obtener detalles del dispositivo: {e}\n")
 
     # Validar tags
     device_tags = device_detail.get('tags', [])
 
     if device_detail.get('name') != my_name:
-        sys.exit('Parte 4: el nombre del dispositivo no fue actualizado\n')
+        sys.exit('❌ Parte 4: el nombre del dispositivo no fue actualizado\n')
     elif set(device_tags) != set(my_tags):
-        sys.exit('Parte 4: los tags del dispositivo no fueron actualizados\n')
+        sys.exit('❌ Parte 4: los tags del dispositivo no fueron actualizados\n')
     elif device_detail.get('address') != my_address:
-        sys.exit('Parte 4: la dirección del dispositivo no fue actualizada\n')
+        sys.exit('❌ Parte 4: la dirección del dispositivo no fue actualizada\n')
     else:
-        print(f"Parte 4: ✅ Se actualizó el AP {my_serial} con dirección: {my_address}\n")
+        print(f"✅ Parte 4: Se actualizó el AP {my_serial} con dirección: {my_address}\n")
 
 
 
@@ -180,27 +180,27 @@ try:
         enabled=True,
         authMode='psk'
     )
-except meraki.APIError as e:
-    sys.exit(f"Part 5: Error al actualizar el SSID: {e}\n")
+except Exception as e:
+    sys.exit(f"❌ Part 5: Error al actualizar el SSID: {e}\n")
 
 # === Verificación de que se aplicaron los cambios ===
 try:
     ssids = dashboard.wireless.getNetworkWirelessSsids(my_netid)
-except meraki.APIError as e:
-    sys.exit(f"Part 5: Error al obtener los SSIDs: {e}\n")
+except Exception as e:
+    sys.exit(f"❌ Part 5: Error al obtener los SSIDs: {e}\n")
 
 ssid_0 = ssids[0] if len(ssids) > 0 else {}
 
 if ssid_0.get('name') != my_ssid_name:
-    sys.exit('Parte 5: SSID en el primer slot no fue actualizado correctamente\n')
+    sys.exit('❌ Parte 5: El nombre del SSID en el primer slot no fue actualizado correctamente\n')
 elif my_ssid_name not in [ssid.get('name') for ssid in ssids]:
-    sys.exit('Parte 5: SSID no fue encontrado en la lista de SSIDs\n')
+    sys.exit('❌ Parte 5: SSID no fue encontrado en la lista de SSIDs\n')
 elif ssid_0.get('psk') != my_ssid_psk:
-    sys.exit('Parte 5: PSK del SSID no fue actualizado\n')
+    sys.exit('❌ Parte 5: PSK del SSID no fue actualizado\n')
 elif not ssid_0.get('enabled', False):
-    sys.exit('Parte 5: SSID no fue habilitado\n')
+    sys.exit('❌ Parte 5: SSID no fue habilitado\n')
 else:
-    print(f"Parte 5: ✅ Se actualizó la red {my_name} con el SSID '{my_ssid_name}' en la posición 0\n")
+    print(f"✅ Parte 5: Se actualizó la red {my_name} con el SSID '{my_ssid_name}' en la posición 0\n")
 
 print('🎉 Has completado exitosamente el laboratorio de la API de Meraki en Python. ¡Felicitaciones!\n')
 
