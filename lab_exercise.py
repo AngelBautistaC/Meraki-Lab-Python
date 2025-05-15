@@ -1,9 +1,6 @@
-# API Python module @ https://github.com/meraki/dashboard-api-python/blob/master/meraki.py
-
-
 #Ejercicio previo: hacer unclaim de APs de alguna network...
 
-##### DO NOT MODIFY #####
+##### No Modificar #####
 import meraki
 import random
 import sys
@@ -11,47 +8,47 @@ import login
 
 API_KEY = login.api_key
 dashboard = meraki.DashboardAPI(API_KEY)
-
-
 orgs = dashboard.organizations.getOrganizations()
 
+##### No Modificar #####
 
 
+#########################
+##### EDITAR #####
 nombre_organizacion='Cisco_Peru'
+##### EDITAR #####
+#########################
+
 org_names = [org['name'] for org in orgs]
 index = org_names.index(nombre_organizacion)
 my_org = orgs[index]['id']
-##### DO NOT MODIFY #####
-print(my_org)
+
+print("La organizacion '{0}' tiene un ID: {1}",nombre_organizacion,my_org)
 
 
-# 1. Create a network
+# 1. Crear una Network
 
 #########################
-##### START EDITING #####
-my_name = 'Borrador'
+##### EDITAR #####
+my_name = 'Draft'
 my_tags = ['Tag1', 'Tag2', 'Tag3']
 my_time = 'America/Lima'
-###### END EDITING ######
+##### EDITAR #####
 #########################
 
-# Get the current list of networks
+# Obtener listado de networks y sus nombres
 current_networks = dashboard.organizations.getOrganizationNetworks(my_org)
-
-# Get the current networks' names
 network_names = [network['name'] for network in current_networks]
 
-# Was my_name changed from default 'First Last'?
-if my_name == 'First Last':
-    sys.exit('Part 1: please edit your name\n')
-# Have tags been added?
+# Proceso de validación
+if my_name == 'Draft':
+    sys.exit('⚠️ Parte 1: Editar el nombre de la red...\n')
 elif my_tags == '':
-    sys.exit(('Part 1: please add some tags\n'))
-# Does the network already exist?
+    sys.exit(('⚠️ Parte 1: Agregar algunos tags...s\n'))
 elif my_name in network_names:
     my_netid = current_networks[network_names.index(my_name)]['id']
-    print('Part 1: the network {0} already exists with ID {1}\n'.format(my_name, my_netid))
-# Add the new network
+    print('✅ Parte 1: La network {0} ya existe, con un ID: {1}\n'.format(my_name, my_netid))
+# Añadir la network
 else:
     # Call to create a newtork
     my_network = dashboard.organizations.createOrganizationNetwork(
@@ -61,166 +58,151 @@ else:
     )
 
     my_netid = my_network['id']
-    print('Part 1: created network {0} with network ID {1}\n'.format(my_name, my_netid))
+    print('✅ Parte 1: Creada la network {0} con network ID {1}\n'.format(my_name, my_netid))
 
 
 
 
 
 
-# 2. Return the inventory for an organization
+# 2. Retornar el inventario de la organización
 
 #########################
-##### START EDITING #####
-# Hace una llamada para retornar el inventario de la organización. Investigar los argumentos que toma
+##### EDITAR #####
+# Hace una llamada para retornar el inventario de la organización. 
+    try:
+        inventory = dashboard.organizations.getOrganizationInventoryDevices()
+    except meraki.APIError as e:
+        sys.exit(f"❌ Parte 2: Error en el request: {e}")
 
-inventory = dashboard.organizations.getOrganizationInventoryDevices(organizationId=my_org)
-
-###### END EDITING ######
+##### EDITAR #####
 #########################
+
 
 # Filtrar y mostrar solo los dispositivos sin utilizar...
 unused = [device for device in inventory if device['networkId'] is None]
-print('Ejercicio 2: found total of {0} unused devices in inventory\n'.format(len(unused)))
+print('✅ Parte 2: Se encontró un total de {0} dispositivos no utilizados en networks\n'.format(len(unused)))
 
 
 
+# 3. Realizar el claim de un dispositivo en la Network
 
-
-# 3. Claim a device into a network
-
-# Check if network already contains devices
-
+# Ver si la red ya tiene un dispositivo
 network_devices = dashboard.networks.getNetworkDevices(my_netid)
-
-
-
 if len(network_devices) == 0:
     # Buscar un AP dentro de dispositivos sin utilizar.
     for my_ap in unused:
         if my_ap['model'].startswith(('CW', 'MR')):
-            print(f"Ejercicio 3: Se encontró un AP {my_ap['model']} sin utilizar, con serial number: {my_ap['serial']}\n")
+            print(f"Parte 3: Se encontró un AP {my_ap['model']} sin utilizar, con serial number: {my_ap['serial']}\n")
 
     # #########################
-    # ##### START EDITING #####
+    # ##### EDITAR #####
     my_serial = "ABCD-EFGH-IJKL"
-   
-    # ###### END EDITING ######
+    # ###### EDITAR ######
     # #########################
 
-    # Claim the device into the network
+    # Hacer Claim al device en la Network
     try:
         dashboard.networks.claimNetworkDevices(my_netid, serials=[my_serial])
     except meraki.APIError as e:
-        sys.exit(f"[ERROR] Claim failed: {e}")
+        sys.exit(f"❌ Parte 3: Error en el claim: {e}")
 
-    # Confirm device is now part of the network
+    # Confirmar que el device está en la Network
     network_devices_after = dashboard.networks.getNetworkDevices(my_netid)
     if not any(dev['serial'] == my_serial for dev in network_devices_after):
-        sys.exit('Part 3: AP no hizo claim correctamente\n')
+        sys.exit('❌ Parte 3: AP no hizo claim correctamente\n')
     else:
-        print(f'Part 3: Se añadió el AP {my_serial} en la network: {my_name} \n')
+        print(f'✅ Parte 3: Se añadió el AP {my_serial} en la network: {my_name} \n')
 
 else:
     my_ap = network_devices[0]
     my_serial = my_ap['serial']
-    print(f'Part 3: AP {my_serial} ya se encuentra en la network: {my_name}\n')
+    print(f'✅ Parte 3: AP {my_serial} ya se encuentra en la network: {my_name}\n')
 
 
-# # 4. Update the attributes of a device
-
-# #########################
-# ##### START EDITING #####
-# my_address = 'Cisco Peru'
-# ###### END EDITING ######
-# #########################
-
-# # Check if address changed from default
-# if my_address == '500 Terry A. Francois Blvd, San Francisco, CA 94158' or my_address == '':
-#     sys.exit('Part 4: change your address to your favorite vacation spot (not 500TF)!\n')
+# 4. Actualizar los atributos de un dispositivo
 
 # #########################
-# ##### START EDITING #####
-# # Call to update the attributes of a device
-# # Only change this one line below
-# meraki.updatedevice(my_key, move='true')
-# ###### END EDITING ######
+# ##### EDITAR #####
+my_address = 'Edificio Real Uno, Piso 13, Victor Andres Belaunde 147, Vía Principal 123, San Isidro 15073'
+# ###### EDITAR ######
 # #########################
 
-# # Check if all attributes were updated and marked moved
-# device_detail = meraki.getdevicedetail(my_key, my_netid, my_serial)
-# try:
-#     device_tags = device_detail['tags'].strip()
-# except:
-#     sys.exit('Part 4: no tags were applied to the device\n')
-# if device_detail['name'] != my_name:
-#     sys.exit('Part 4: the name of the device was not changed\n')
-# elif set(device_tags.split()) != set(my_tags):
-#     sys.exit('Part 4: the tags of the device were not changed\n')
-# elif device_detail['address'] != my_address:
-#     sys.exit('Part 4: the address of the device was not changed\n')
-# elif device_detail['lat'] == 37.4180951010362 and device_detail['lng'] == -122.098531723022:
-#     sys.exit('Part 4: the marker for the address was not moved\n')
-# else:
-#     print('Part 4: updated address of AP {0} to {1}\n'.format(my_serial, my_address))
+# Validar
+if my_address == 'Edificio Real Uno, Piso 13, Victor Andres Belaunde 147, Vía Principal 123, San Isidro 15073' or my_address == '':
+    sys.exit('❌ Parte 4: Address no ha sido modificado\n')
+
+else:
+    # #########################
+    # ##### EDITAR #####
+    # Hacer un update de los atributos del AP - Agregar parámetros necesarios
+    try:
+        dashboard.devices.updateDevice(moveMapMarker=True)
+    except meraki.APIError as e:
+        sys.exit(f"❌ Parte 4: Error: {e}")
+    # ###### EDITAR ######
+    # #########################
+
+
+    # === Verificación de cambios aplicados ===
+    try:
+        device_detail = dashboard.devices.getDevice(my_serial)
+    except meraki.APIError as e:
+        sys.exit(f"Parte 4: No se pudo obtener detalles del dispositivo: {e}\n")
+
+    # Validar tags
+    device_tags = device_detail.get('tags', [])
+
+    if device_detail.get('name') != my_name:
+        sys.exit('Parte 4: el nombre del dispositivo no fue actualizado\n')
+    elif set(device_tags) != set(my_tags):
+        sys.exit('Parte 4: los tags del dispositivo no fueron actualizados\n')
+    elif device_detail.get('address') != my_address:
+        sys.exit('Parte 4: la dirección del dispositivo no fue actualizada\n')
+    else:
+        print(f"Parte 4: ✅ Se actualizó el AP {my_serial} con dirección: {my_address}\n")
 
 
 
-# # 5. Update the attributes of an SSID
+# === 5. Actualizar los atributos de un SSID ===
+my_ssid_name = ''
+my_ssid_psk = ''
 
-# #########################
-# ##### START EDITING #####
-# my_ssid_name = ''
-# my_ssid_psk = ''
-# ###### END EDITING ######
-# #########################
+# Validación inicial
+if my_ssid_name.strip() == '' or my_ssid_psk.strip() == '':
+    sys.exit('❌ Parte 5: Editar nombre SSID y PSK...\n')
 
-# # Check if defaults have been changed
-# if my_ssid_name == '' or my_ssid_psk == '':
-#     sys.exit('Part 5: please edit your SSID name and PSK\n')
+# === Actualizar SSID en la posición 0 ===
+try:
+    dashboard.wireless.updateNetworkWirelessSsid(
+        encryptionMode="wpa",
+        wpaEncryptionMode= "WPA2 only",
+        enabled=True,
+        authMode='psk'
+    )
+except meraki.APIError as e:
+    sys.exit(f"Part 5: Error al actualizar el SSID: {e}\n")
 
-# #########################
-# ##### START EDITING #####
-# # Call to update the attributes of an SSID
-# # Only add one line here to call the function
+# === Verificación de que se aplicaron los cambios ===
+try:
+    ssids = dashboard.wireless.getNetworkWirelessSsids(my_netid)
+except meraki.APIError as e:
+    sys.exit(f"Part 5: Error al obtener los SSIDs: {e}\n")
 
-# ###### END EDITING ######
-# #########################
+ssid_0 = ssids[0] if len(ssids) > 0 else {}
 
-# # Check if SSID was updated correctly
-# ssids = meraki.getssids(my_key, my_netid)
-# if ssids[0]['name'] != my_ssid_name:
-#     sys.exit('Part 5: SSID in the first slot not successfully updated\n')
-# elif my_ssid_name not in [ssid['name'] for ssid in ssids]:
-#     sys.exit('Part 5: SSID not successfully updated\n')
-# elif ssids[0]['psk'] != my_ssid_psk:
-#     sys.exit('Part 5: SSID not successfully updated\n')
-# elif ssids[0]['enabled'] != True:
-#     sys.exit('Part 5: SSID not enabled\n')
-# else:
-#     print('Part 5: updated the network {0} with SSID {1} in the first slot\n'.format(my_name, my_ssid_name))
+if ssid_0.get('name') != my_ssid_name:
+    sys.exit('Parte 5: SSID en el primer slot no fue actualizado correctamente\n')
+elif my_ssid_name not in [ssid.get('name') for ssid in ssids]:
+    sys.exit('Parte 5: SSID no fue encontrado en la lista de SSIDs\n')
+elif ssid_0.get('psk') != my_ssid_psk:
+    sys.exit('Parte 5: PSK del SSID no fue actualizado\n')
+elif not ssid_0.get('enabled', False):
+    sys.exit('Parte 5: SSID no fue habilitado\n')
+else:
+    print(f"Parte 5: ✅ Se actualizó la red {my_name} con el SSID '{my_ssid_name}' en la posición 0\n")
 
-# print('You have successfully completed the Dashboard API Python lab. Congratulations!!\n')
+print('🎉 Has completado exitosamente el laboratorio de la API de Meraki en Python. ¡Felicitaciones!\n')
 
 
 
-# # BONUS. Update the attributes of an SSID
-
-# #########################
-# ##### START EDITING #####
-# # Call to update the attributes of all other SSIDs
-# # Edit the two lines and only two lines here
-# for x in range(0):
-#     # Remove pass, and fill in the blank by calling a function
-#     pass
-# ###### END EDITING ######
-# #########################
-
-# # Check if all other SSIDs were updated correctly
-# ssids = meraki.getssids(my_key, my_netid)
-# for name in [ssid['name'] for ssid in ssids]:
-#     if 'Unconfigured' in name:
-#         sys.exit('Bonus: not all SSIDs updated yet\n')
-#     else:
-#         pass
-# print('You have completed the bonus question. Awesome!!\n')
